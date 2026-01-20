@@ -1,0 +1,341 @@
+<?php
+
+namespace App\Filament\Resources;
+
+use App\Filament\Resources\PageResource\Pages;
+use App\Filament\Resources\PageResource\RelationManagers;
+use App\Models\Page;
+use Filament\Forms;
+use Filament\Forms\Form;
+use Filament\Resources\Resource;
+use Filament\Tables;
+use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
+
+class PageResource extends Resource
+{
+    protected static ?string $model = Page::class;
+
+    protected static ?string $navigationIcon = 'heroicon-o-document-text';
+
+    protected static ?string $navigationGroup = 'Content Management';
+
+    protected static ?int $navigationSort = 1;
+    
+    protected static ?string $recordTitleAttribute = 'title';
+
+    public static function form(Form $form): Form
+    {
+        return $form
+            ->schema([
+                Forms\Components\Tabs::make('Page Editor')
+                    ->tabs([
+                        Forms\Components\Tabs\Tab::make('Content')
+                            ->icon('heroicon-o-document-text')
+                            ->schema([
+                                Forms\Components\Group::make()
+                                    ->schema([
+                                        Forms\Components\TextInput::make('title')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->live(onBlur: true)
+                                            ->afterStateUpdated(fn (string $operation, ?string $state, Forms\Set $set) => 
+                                                $operation === 'create' ? $set('slug', \Illuminate\Support\Str::slug($state)) : null
+                                            ),
+                                        
+                                        Forms\Components\TextInput::make('slug')
+                                            ->required()
+                                            ->maxLength(255)
+                                            ->unique(ignoreRecord: true)
+                                            ->rules(['regex:/^[a-z0-9-]+$/'])
+                                            ->helperText('URL-friendly version of the title. Use only lowercase letters, numbers, and hyphens.'),
+                                    ])->columns(2),
+
+                                Forms\Components\Builder::make('blocks')
+                                    ->label('Page Content')
+                                    ->blockPickerColumns(2)
+                                    ->blockPickerWidth('2xl')
+                                    ->helperText('Build your page using flexible content blocks. Drag to reorder, click to edit.')
+                                    ->blocks([
+                                        // HERO BLOCK
+                                        // Full-width banner with responsive images, headline, subtitle, and CTA button
+                                        // Data structure: { title, subtitle, button_text, button_url, image_desktop, image_tablet, image_mobile }
+                                        // Rendered by: resources/views/components/blocks/hero-builder.blade.php
+                                        Forms\Components\Builder\Block::make('hero')
+                                            ->label('Hero Banner')
+                                            ->icon('heroicon-m-star')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('title')
+                                                    ->label('Headline')
+                                                    ->required(),
+                                                Forms\Components\Textarea::make('subtitle')
+                                                    ->rows(2),
+                                                Forms\Components\Grid::make(2)
+                                                    ->schema([
+                                                        Forms\Components\TextInput::make('button_text')
+                                                            ->label('Button Text'),
+                                                        Forms\Components\TextInput::make('button_url')
+                                                            ->label('Button URL')
+                                                            ->url(),
+                                                    ]),
+                                                Forms\Components\Tabs::make('Images')
+                                                    ->tabs([
+                                                        Forms\Components\Tabs\Tab::make('Desktop')
+                                                            ->schema([
+                                                                \Awcodes\Curator\Components\Forms\CuratorPicker::make('image_desktop')
+                                                                    ->label('Desktop Image')
+                                                                    ->size('sm')
+                                                                    ->constrained(true),
+                                                            ]),
+                                                        Forms\Components\Tabs\Tab::make('Tablet')
+                                                            ->schema([
+                                                                \Awcodes\Curator\Components\Forms\CuratorPicker::make('image_tablet')
+                                                                    ->label('Tablet Image')
+                                                                    ->size('sm')
+                                                                    ->constrained(true),
+                                                            ]),
+                                                        Forms\Components\Tabs\Tab::make('Mobile')
+                                                            ->schema([
+                                                                \Awcodes\Curator\Components\Forms\CuratorPicker::make('image_mobile')
+                                                                    ->label('Mobile Image')
+                                                                    ->size('sm')
+                                                                    ->constrained(true),
+                                                            ]),
+                                                    ]),
+                                            ]),
+
+                                        // TEXT BLOCK
+                                        // Rich text editor for formatted content (paragraphs, lists, links, etc.)
+                                        // Data structure: { content }
+                                        // Rendered by: pages/builder.blade.php (inline)
+                                        Forms\Components\Builder\Block::make('text')
+                                            ->label('Rich Text Content')
+                                            ->icon('heroicon-m-document-text')
+                                            ->schema([
+                                                Forms\Components\RichEditor::make('content')
+                                                    ->required(),
+                                            ]),
+
+                                        // IMAGE BLOCK
+                                        // Single image with alt text and optional caption
+                                        // Data structure: { url (media_id), alt, caption }
+                                        // Rendered by: pages/builder.blade.php (inline)
+                                        // Note: 'url' field stores Curator Media ID, resolved via MediaHelper::resolveUrl()
+                                        Forms\Components\Builder\Block::make('image')
+                                            ->label('Single Image')
+                                            ->icon('heroicon-m-photo')
+                                            ->schema([
+                                                \Awcodes\Curator\Components\Forms\CuratorPicker::make('url')
+                                                    ->label('Image')
+                                                    ->required()
+                                                    ->size('sm')
+                                                    ->constrained(true),
+                                                Forms\Components\TextInput::make('alt')
+                                                    ->label('Alt Text')
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('caption')
+                                                    ->label('Caption'),
+                                            ]),
+
+                                        // PRODUCT GRID BLOCK
+                                        // Dynamic product display (featured, latest, or on sale)
+                                        // Data structure: { heading, type, count }
+                                        // Rendered by: pages/builder.blade.php using @livewire('product-grid-block')
+                                        Forms\Components\Builder\Block::make('product_grid')
+                                            ->label('Product Grid')
+                                            ->icon('heroicon-m-shopping-bag')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('heading')
+                                                    ->label('Section Heading'),
+                                                Forms\Components\Select::make('type')
+                                                    ->options([
+                                                        'featured' => 'Featured Products',
+                                                        'latest' => 'Latest Products',
+                                                        'sale' => 'On Sale',
+                                                    ])
+                                                    ->default('featured')
+                                                    ->required(),
+                                                Forms\Components\TextInput::make('count')
+                                                    ->label('Number of Products')
+                                                    ->numeric()
+                                                    ->default(4),
+                                            ]),
+                                            
+                                        // HTML BLOCK
+                                        // Raw HTML/JavaScript for custom content (use with caution)
+                                        // Data structure: { code }
+                                        // Rendered by: pages/builder.blade.php (inline, unescaped)
+                                        // WARNING: Content is output with {!! !!} - ensure trusted input only
+                                        Forms\Components\Builder\Block::make('html')
+                                            ->label('Custom HTML')
+                                            ->icon('heroicon-m-code-bracket')
+                                            ->schema([
+                                                Forms\Components\Textarea::make('code')
+                                                    ->label('Raw HTML')
+                                                    ->rows(5)
+                                                    ->required(),
+                                            ]),
+                                    ])
+                                    ->collapsible()
+                                    ->cloneable()
+                                    ->reorderable()
+                                    ->minItems(1)
+                                    ->addActionLabel('Add Content Block'),
+                            ]),
+                        
+                        Forms\Components\Tabs\Tab::make('Appearance & Settings')
+                            ->icon('heroicon-o-cog')
+                            ->schema([
+                                Forms\Components\Grid::make(2)
+                                    ->schema([
+                                        Forms\Components\Select::make('template')
+                                            ->required()
+                                            ->options([
+                                                'default' => 'Default Template',
+                                                'sidebar' => 'With Sidebar',
+                                                'landing' => 'Landing Page (No Header/Footer)',
+                                            ])
+                                            ->default('default')
+                                            ->helperText('Select the layout structure for this page.'),
+                                        
+                                        Forms\Components\TextInput::make('sort_order')
+                                            ->label('Sort Order')
+                                            ->numeric()
+                                            ->default(0)
+                                            ->helperText('Lower numbers appear first in navigation.'),
+                                    ]),
+                                
+                                Forms\Components\Section::make('Visibility')
+                                    ->schema([
+                                        Forms\Components\Toggle::make('is_published')
+                                            ->label('Published')
+                                            ->helperText('Only published pages are visible to visitors.')
+                                            ->default(false),
+                                        Forms\Components\Toggle::make('is_homepage')
+                                            ->label('Set as Homepage')
+                                            ->helperText('This page will be shown at the root URL (/).')
+                                            ->default(false),
+                                        Forms\Components\Toggle::make('show_title')
+                                            ->label('Show Page Title')
+                                            ->default(true)
+                                            ->helperText('Hide this on the Homepage so the Hero banner is the first thing seen.'),
+                                    ])->columns(2),
+                            ]),
+
+                        Forms\Components\Tabs\Tab::make('SEO')
+                            ->icon('heroicon-o-globe-alt')
+                            ->schema([
+                                Forms\Components\Textarea::make('meta_description')
+                                    ->maxLength(160)
+                                    ->rows(3)
+                                    ->helperText('Keep it under 160 characters for best SEO results.')
+                                    ->columnSpanFull(),
+                                Forms\Components\TextInput::make('meta_keywords')
+                                    ->maxLength(255)
+                                    ->helperText('Separate keywords with commas.')
+                                    ->columnSpanFull(),
+                                Forms\Components\KeyValue::make('seo_settings')
+                                    ->label('Additional SEO Tags')
+                                    ->keyLabel('Property Name')
+                                    ->valueLabel('Content Value')
+                                    ->columnSpanFull(),
+                            ]),
+                    ])
+                    ->columnSpanFull(),
+            ]);
+    }
+
+    public static function table(Table $table): Table
+    {
+        return $table
+            ->columns([
+                Tables\Columns\TextColumn::make('title')
+                    ->searchable()
+                    ->sortable()
+                    ->weight('bold'),
+                Tables\Columns\TextColumn::make('slug')
+                    ->searchable()
+                    ->copyable()
+                    ->icon('heroicon-o-link')
+                    ->color('primary')
+                    ->url(fn ($record) => url('/' . $record->slug))
+                    ->openUrlInNewTab(),
+                Tables\Columns\BadgeColumn::make('template')
+                    ->colors([
+                        'primary' => 'default',
+                        'warning' => 'sidebar',
+                        'danger' => 'landing',
+                    ]),
+                Tables\Columns\IconColumn::make('is_published')
+                    ->label('Published')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-eye')
+                    ->falseIcon('heroicon-o-eye-slash')
+                    ->trueColor('success')
+                    ->falseColor('gray'),
+                Tables\Columns\IconColumn::make('is_homepage')
+                    ->label('Homepage')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-home')
+                    ->falseIcon('heroicon-o-minus')
+                    ->trueColor('warning')
+                    ->falseColor('gray'),
+                Tables\Columns\TextColumn::make('sort_order')
+                    ->label('Order')
+                    ->numeric()
+                    ->sortable()
+                    ->alignCenter(),
+                Tables\Columns\TextColumn::make('updated_at')
+                    ->label('Last Modified')
+                    ->dateTime()
+                    ->sortable()
+                    ->since(),
+            ])
+            ->filters([
+                Tables\Filters\TernaryFilter::make('is_published')
+                    ->label('Published Status')
+                    ->placeholder('All pages')
+                    ->trueLabel('Published only')
+                    ->falseLabel('Draft only'),
+                Tables\Filters\SelectFilter::make('template')
+                    ->options([
+                        'default' => 'Default',
+                        'full-width' => 'Full Width',
+                        'sidebar' => 'With Sidebar',
+                        'landing' => 'Landing Page',
+                    ]),
+            ])
+            ->actions([
+                Tables\Actions\ActionGroup::make([
+                    Tables\Actions\ViewAction::make()
+                        ->url(fn ($record) => url('/' . $record->slug))
+                        ->openUrlInNewTab(),
+                    Tables\Actions\EditAction::make(),
+                    Tables\Actions\DeleteAction::make(),
+                ])
+            ])
+            ->bulkActions([
+                Tables\Actions\BulkActionGroup::make([
+                    Tables\Actions\DeleteBulkAction::make(),
+                ]),
+            ])
+            ->defaultSort('sort_order', 'asc');
+    }
+
+    public static function getRelations(): array
+    {
+        return [
+            // Legacy sections manager removed
+        ];
+    }
+
+    public static function getPages(): array
+    {
+        return [
+            'index' => Pages\ListPages::route('/'),
+            'create' => Pages\CreatePage::route('/create'),
+            'edit' => Pages\EditPage::route('/{record}/edit'),
+        ];
+    }
+}

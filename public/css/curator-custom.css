@@ -1,0 +1,93 @@
+/* Improved Curator Media Picker UI */
+
+/* Make the picker modal larger and cleaner */
+.fi-modal-window[data-modal-id*="curator"] {
+    max-width: 90vw !important;
+    max-height: 90vh !important;
+}
+
+/* Improve upload area */
+[x-data*="curator"] .fi-fo-file-upload {
+    min-height: 200px !important;
+    border: 2px dashed #cbd5e1 !important;
+    border-radius: 12px !important;
+    background: #f8fafc !important;
+    transition: all 0.3s ease !important;
+}
+
+[x-data*="curator"] .fi-fo-file-upload:hover {
+    border-color: var(--color-primary, #3b82f6) !important;
+    background: #eff6ff !important;
+}
+
+/* Upload button styling */
+[x-data*="curator"] .fi-btn {
+    padding: 12px 24px !important;
+    font-size: 16px !important;
+    border-radius: 8px !important;
+}
+
+/* Media grid improvements */
+[x-data*="curator"] .grid {
+    gap: 16px !important;
+}
+
+[x-data*="curator"] .fi-ta-record {
+    border-radius: 12px !important;
+    overflow: hidden !important;
+    transition: transform 0.2s ease, box-shadow 0.2s ease !important;
+}
+
+[x-data*="curator"] .fi-ta-record:hover {
+    transform: translateY(-2px) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+}
+
+/* Image thumbnails */
+[x-data*="curator"] img {
+    object-fit: cover !important;
+    border-radius: 8px !important;
+}
+
+/* Upload progress */
+[x-data*="curator"] .fi-fo-file-upload-progress {
+    height: 6px !important;
+    border-radius: 3px !important;
+    background: #e5e7eb !important;
+}
+
+[x-data*="curator"] .fi-fo-file-upload-progress-bar {
+    background: linear-gradient(90deg, var(--color-primary, #3b82f6), var(--color-secondary, #8b5cf6)) !important;
+    border-radius: 3px !important;
+}
+
+/* Error messages */
+[x-data*="curator"] .fi-fo-field-wrp-error-message {
+    color: #ef4444 !important;
+    font-size: 14px !important;
+    margin-top: 8px !important;
+    padding: 8px 12px !important;
+    background: #fee2e2 !important;
+    border-radius: 6px !important;
+}
+
+/* Success state */
+[x-data*="curator"] .fi-fo-file-upload-file {
+    background: #f0fdf4 !important;
+    border: 1px solid #86efac !important;
+    border-radius: 8px !important;
+    padding: 12px !important;
+}
+
+/* Drag and drop text */
+[x-data*="curator"] .fi-fo-file-upload-text {
+    font-size: 16px !important;
+    color: #64748b !important;
+    font-weight: 500 !important;
+}
+
+/* Selected image highlight */
+[x-data*="curator"] [aria-selected="true"] {
+    outline: 3px solid var(--color-primary, #3b82f6) !important;
+    outline-offset: 2px !important;
+}
