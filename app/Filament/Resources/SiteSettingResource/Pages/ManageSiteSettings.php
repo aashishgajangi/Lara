@@ -93,7 +93,48 @@ class ManageSiteSettings extends Page implements HasForms
             'whatsapp_enabled' => SiteSetting::get('whatsapp_enabled', false),
             'whatsapp_number' => SiteSetting::get('whatsapp_number', ''),
             'whatsapp_message' => SiteSetting::get('whatsapp_message', 'Hello! I need help with...'),
+            'whatsapp_message' => SiteSetting::get('whatsapp_message', 'Hello! I need help with...'),
             'whatsapp_position' => SiteSetting::get('whatsapp_position', 'bottom-right'),
+
+            // Organization Schema
+            // Identity
+            'org_schema_type' => SiteSetting::get('org_schema_type', 'Organization'),
+            'org_legal_name' => SiteSetting::get('org_legal_name', SiteSetting::get('site_logo_text', 'LaraCommerce')),
+            'org_alternate_name' => SiteSetting::get('org_alternate_name', ''),
+            'org_description' => SiteSetting::get('org_description', ''),
+            'org_slogan' => SiteSetting::get('org_slogan', ''),
+            
+            // Legal & Identifiers
+            'org_tax_id' => SiteSetting::get('org_tax_id', ''),
+            'org_vat_id' => SiteSetting::get('org_vat_id', ''),
+            'org_duns' => SiteSetting::get('org_duns', ''),
+            'org_iso6523' => SiteSetting::get('org_iso6523', ''),
+            
+            // Founding Info
+            'org_founding_date' => SiteSetting::get('org_founding_date', ''),
+            'org_founder' => SiteSetting::get('org_founder', ''),
+            'org_founding_location' => SiteSetting::get('org_founding_location', ''),
+            
+            // Address Details
+            'org_addr_street' => SiteSetting::get('org_addr_street', ''),
+            'org_addr_city' => SiteSetting::get('org_addr_city', ''),
+            'org_addr_state' => SiteSetting::get('org_addr_state', ''),
+            'org_addr_postal_code' => SiteSetting::get('org_addr_postal_code', ''),
+            'org_addr_country' => SiteSetting::get('org_addr_country', ''),
+            
+            // Contact Point Details
+            'org_contact_type' => SiteSetting::get('org_contact_type', 'customer service'),
+            'org_area_served' => SiteSetting::get('org_area_served', 'Worldwide'),
+            'org_available_language' => SiteSetting::get('org_available_language', 'English'),
+            
+            // Business Details
+            'org_price_range' => SiteSetting::get('org_price_range', ''),
+            'org_currencies_accepted' => SiteSetting::get('org_currencies_accepted', ''),
+            'org_payment_accepted' => SiteSetting::get('org_payment_accepted', ''),
+            
+            // Links
+            'org_diversity_policy' => SiteSetting::get('org_diversity_policy', ''),
+            'org_ethics_policy' => SiteSetting::get('org_ethics_policy', ''),
         ];
     }
 
@@ -254,6 +295,122 @@ class ManageSiteSettings extends Page implements HasForms
                                     ->columns(2),
                             ]),
                             
+                            
+                        Forms\Components\Tabs\Tab::make('Organization Schema')
+                            ->icon('heroicon-o-building-office')
+                            ->schema([
+                                Forms\Components\Section::make('Identity')
+                                    ->description('Core identity information for Schema.org')
+                                    ->schema([
+                                        Forms\Components\Select::make('org_schema_type')
+                                            ->label('Schema Type')
+                                            ->options([
+                                                'Organization' => 'Organization (Generic)',
+                                                'LocalBusiness' => 'Local Business',
+                                                'Store' => 'Store',
+                                                'Bakery' => 'Bakery',
+                                                'Restaurant' => 'Restaurant',
+                                            ])
+                                            ->default('Organization')
+                                            ->required()
+                                            ->live()
+                                            ->columnSpanFull()
+                                            ->helperText('Select "Store" or "Bakery" if you sell products. "Organization" does not support price range or payment methods.'),
+                                        Forms\Components\TextInput::make('org_legal_name')
+                                            ->label('Legal Name')
+                                            ->helperText('The official registered name of the organization.')
+                                            ->required(),
+                                        Forms\Components\TextInput::make('org_alternate_name')
+                                            ->label('Alternate Name')
+                                            ->helperText('An alias or trading name.'),
+                                        Forms\Components\Textarea::make('org_description')
+                                            ->label('Description')
+                                            ->rows(2),
+                                        Forms\Components\TextInput::make('org_slogan')
+                                            ->label('Slogan'),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Location & Address')
+                                    ->description('Physical location details')
+                                    ->schema([
+                                        Forms\Components\Textarea::make('org_addr_street')
+                                            ->label('Street Address')
+                                            ->rows(2)
+                                            ->columnSpanFull(),
+                                        Forms\Components\TextInput::make('org_addr_city')
+                                            ->label('City'),
+                                        Forms\Components\TextInput::make('org_addr_state')
+                                            ->label('State/Province'),
+                                        Forms\Components\TextInput::make('org_addr_postal_code')
+                                            ->label('Postal Code'),
+                                        Forms\Components\TextInput::make('org_addr_country')
+                                            ->label('Country')
+                                            ->helperText('ISO 3166-1 alpha-2 country code (e.g. US, IN)'),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Legal & Identifiers')
+                                    ->description('Official registration identifiers')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('org_tax_id')
+                                            ->label('Tax ID')
+                                            ->helperText('e.g. TIN, EIN'),
+                                        Forms\Components\TextInput::make('org_vat_id')
+                                            ->label('VAT ID'),
+                                        Forms\Components\TextInput::make('org_duns')
+                                            ->label('DUNS Number')
+                                            ->helperText('Dun & Bradstreet Number'),
+                                        Forms\Components\TextInput::make('org_iso6523')
+                                            ->label('ISO 6523 Code'),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Founding Information')
+                                    ->schema([
+                                        Forms\Components\DatePicker::make('org_founding_date')
+                                            ->label('Founding Date'),
+                                        Forms\Components\TextInput::make('org_founder')
+                                            ->label('Founder(s)')
+                                            ->helperText('Comma separated names'),
+                                        Forms\Components\TextInput::make('org_founding_location')
+                                            ->label('Founding Location'),
+                                    ])->columns(3),
+
+                                Forms\Components\Section::make('Contact & Business Details')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('org_contact_type')
+                                            ->label('Contact Type')
+                                            ->default('customer service'),
+                                        Forms\Components\TextInput::make('org_area_served')
+                                            ->label('Area Served')
+                                            ->default('Worldwide'),
+                                        Forms\Components\TextInput::make('org_available_language')
+                                            ->label('Available Language')
+                                            ->default('English'),
+                                        
+                                        Forms\Components\TextInput::make('org_price_range')
+                                            ->label('Price Range')
+                                            ->placeholder('$$$')
+                                            ->hidden(fn (Forms\Get $get) => $get('org_schema_type') === 'Organization'),
+                                        Forms\Components\TextInput::make('org_currencies_accepted')
+                                            ->label('Currencies Accepted')
+                                            ->placeholder('USD, EUR, INR')
+                                            ->hidden(fn (Forms\Get $get) => $get('org_schema_type') === 'Organization'),
+                                        Forms\Components\TextInput::make('org_payment_accepted')
+                                            ->label('Payment Methods')
+                                            ->placeholder('Credit Card, PayPal')
+                                            ->hidden(fn (Forms\Get $get) => $get('org_schema_type') === 'Organization'),
+                                    ])->columns(3),
+
+                                Forms\Components\Section::make('Policy Links')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('org_diversity_policy')
+                                            ->label('Diversity Policy URL')
+                                            ->url(),
+                                        Forms\Components\TextInput::make('org_ethics_policy')
+                                            ->label('Ethics Policy URL')
+                                            ->url(),
+                                    ])->columns(2),
+                            ]),
+
                         Forms\Components\Tabs\Tab::make('Widgets')
                             ->icon('heroicon-o-chat-bubble-left-right')
                             ->schema([

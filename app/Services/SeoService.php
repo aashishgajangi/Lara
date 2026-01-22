@@ -73,7 +73,7 @@ class SeoService
             ->addValue('sku', $product->sku)
             ->addValue('brand', [
                 '@type' => 'Brand',
-                'name' => config('app.name')
+                'name' => trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')))
             ])
             ->addValue('offers', [
                 '@type' => 'Offer',
@@ -215,8 +215,8 @@ class SeoService
      */
     public function setHomepageSeo(): void
     {
-        $siteName = config('app.name');
-        $title = \App\Models\SiteSetting::get('site_logo_text', $siteName) . ' - Quality Products Online';
+        $siteName = trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')));
+        $title = $siteName . ' - Quality Products Online';
         $description = 'Shop quality products at great prices. Fast shipping, secure payment, and easy returns.';
 
         // Meta Tags
@@ -248,25 +248,83 @@ class SeoService
     {
         $logoUrl = \App\Models\SiteSetting::getMediaUrl('site_logo_image');
         
-        JsonLd::addValue('organization', [
-            '@context' => 'https://schema.org',
-            '@type' => 'Organization',
-            'name' => config('app.name'),
+        $siteName = trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')));
+        
+        // Overwrite default WebPage or previous entry in the current slot
+        $orgType = \App\Models\SiteSetting::get('org_schema_type', 'Organization');
+        JsonLdMulti::setType($orgType);
+        
+        $contactPoint = array_filter([
+            '@type' => 'ContactPoint',
+            'telephone' => \App\Models\SiteSetting::get('header_phone', ''),
+            'contactType' => \App\Models\SiteSetting::get('org_contact_type', 'customer service'),
+            'email' => \App\Models\SiteSetting::get('header_email', ''),
+            'areaServed' => \App\Models\SiteSetting::get('org_area_served'),
+            'availableLanguage' => \App\Models\SiteSetting::get('org_available_language'),
+        ], fn($v) => !empty($v));
+
+        $address = array_filter([
+            '@type' => 'PostalAddress',
+            'streetAddress' => \App\Models\SiteSetting::get('org_addr_street'),
+            'addressLocality' => \App\Models\SiteSetting::get('org_addr_city'),
+            'addressRegion' => \App\Models\SiteSetting::get('org_addr_state'),
+            'postalCode' => \App\Models\SiteSetting::get('org_addr_postal_code'),
+            'addressCountry' => \App\Models\SiteSetting::get('org_addr_country'),
+        ], fn($v) => !empty($v));
+        
+        // Remove address if it only contains @type
+        if (count($address) <= 1) {
+            $address = null;
+        }
+
+        $orgData = [
+            'name' => \App\Models\SiteSetting::get('org_legal_name', $siteName),
+            'alternateName' => \App\Models\SiteSetting::get('org_alternate_name'),
+            'description' => \App\Models\SiteSetting::get('org_description'),
+            'slogan' => \App\Models\SiteSetting::get('org_slogan'),
             'url' => url('/'),
             'logo' => $logoUrl ? url($logoUrl) : null,
-            'contactPoint' => [
-                '@type' => 'ContactPoint',
-                'telephone' => \App\Models\SiteSetting::get('header_phone', ''),
-                'contactType' => 'customer service',
-                'email' => \App\Models\SiteSetting::get('header_email', '')
-            ],
+            'contactPoint' => $contactPoint,
             'sameAs' => array_filter([
                 \App\Models\SiteSetting::get('social_facebook'),
                 \App\Models\SiteSetting::get('social_twitter'),
                 \App\Models\SiteSetting::get('social_instagram'),
                 \App\Models\SiteSetting::get('social_linkedin'),
-            ])
-        ]);
+            ]),
+            'address' => $address,
+            'taxID' => \App\Models\SiteSetting::get('org_tax_id'),
+            'vatID' => \App\Models\SiteSetting::get('org_vat_id'),
+            'duns' => \App\Models\SiteSetting::get('org_duns'),
+            'iso6523Code' => \App\Models\SiteSetting::get('org_iso6523'),
+            'foundingDate' => \App\Models\SiteSetting::get('org_founding_date'),
+            'foundingLocation' => \App\Models\SiteSetting::get('org_founding_location') ? [
+                '@type' => 'Place',
+                'name' => \App\Models\SiteSetting::get('org_founding_location')
+            ] : null,
+            'priceRange' => \App\Models\SiteSetting::get('org_price_range'),
+            'currenciesAccepted' => \App\Models\SiteSetting::get('org_currencies_accepted'),
+            'paymentAccepted' => \App\Models\SiteSetting::get('org_payment_accepted'),
+            'diversityPolicy' => \App\Models\SiteSetting::get('org_diversity_policy'),
+            'ethicsPolicy' => \App\Models\SiteSetting::get('org_ethics_policy'),
+        ];
+        
+        // Remove business-specific fields if the type is generic 'Organization'
+        if ($orgType === 'Organization') {
+            unset($orgData['priceRange']);
+            unset($orgData['currenciesAccepted']);
+            unset($orgData['paymentAccepted']);
+        }
+        
+        // Handle Founder
+        $founderName = \App\Models\SiteSetting::get('org_founder');
+        if ($founderName) {
+            $orgData['founder'] = [
+                '@type' => 'Person',
+                'name' => $founderName
+            ];
+        }
+
+        JsonLdMulti::addValues(array_filter($orgData, fn($value) => !empty($value)));
     }
 
     /**
@@ -274,10 +332,12 @@ class SeoService
      */
     protected function addWebSiteSchema(): void
     {
-        JsonLd::addValue('website', [
-            '@context' => 'https://schema.org',
-            '@type' => 'WebSite',
-            'name' => config('app.name'),
+        $siteName = trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')));
+
+        // Use standard JsonLd singleton for WebSite to replace the default WebPage
+        JsonLd::setType('WebSite');
+        JsonLd::addValues([
+            'name' => $siteName,
             'url' => url('/'),
             'potentialAction' => [
                 '@type' => 'SearchAction',
