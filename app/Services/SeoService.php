@@ -9,6 +9,7 @@ use Artesaos\SEOTools\Facades\SEOMeta;
 use Artesaos\SEOTools\Facades\OpenGraph;
 use Artesaos\SEOTools\Facades\TwitterCard;
 use Artesaos\SEOTools\Facades\JsonLd;
+use Artesaos\SEOTools\Facades\JsonLdMulti;
 
 class SeoService
 {
@@ -294,14 +295,15 @@ class SeoService
      */
     public function addBreadcrumbs(array $items): void
     {
-        $breadcrumbs = [
-            '@context' => 'https://schema.org',
-            '@type' => 'BreadcrumbList',
-            'itemListElement' => []
-        ];
+        if (empty($items)) {
+            return;
+        }
 
+        JsonLdMulti::setType('BreadcrumbList');
+
+        $listItems = [];
         foreach ($items as $index => $item) {
-            $breadcrumbs['itemListElement'][] = [
+            $listItems[] = [
                 '@type' => 'ListItem',
                 'position' => $index + 1,
                 'name' => $item['name'],
@@ -309,7 +311,7 @@ class SeoService
             ];
         }
 
-        JsonLd::addValue('breadcrumbs', $breadcrumbs);
+        JsonLdMulti::addValue('itemListElement', $listItems);
     }
 
     /**
