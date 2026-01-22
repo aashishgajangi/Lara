@@ -21,8 +21,7 @@ class SitemapController extends Controller
         $sitemap .= $this->addUrl(route('home'), now(), 'daily', '1.0');
 
         // Pages
-        $pages = Page::where('is_published', true)->get();
-        foreach ($pages as $page) {
+        foreach (Page::where('is_published', true)->cursor() as $page) {
             $sitemap .= $this->addUrl(
                 url($page->slug),
                 $page->updated_at,
@@ -32,8 +31,7 @@ class SitemapController extends Controller
         }
 
         // Categories
-        $categories = Category::where('is_active', true)->get();
-        foreach ($categories as $category) {
+        foreach (Category::where('is_active', true)->cursor() as $category) {
             $sitemap .= $this->addUrl(
                 route('categories.show', $category->slug),
                 $category->updated_at,
@@ -43,8 +41,7 @@ class SitemapController extends Controller
         }
 
         // Products
-        $products = Product::where('is_active', true)->get();
-        foreach ($products as $product) {
+        foreach (Product::where('is_active', true)->cursor() as $product) {
             $sitemap .= $this->addUrl(
                 route('products.show', $product->slug),
                 $product->updated_at,

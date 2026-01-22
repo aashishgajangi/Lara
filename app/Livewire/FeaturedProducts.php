@@ -11,7 +11,7 @@ class FeaturedProducts extends Component
     {
         $products = Product::where('is_active', true)
             ->where('is_featured', true)
-            ->with(['category', 'images'])
+            ->with(['category', 'images.media'])
             ->orderBy('created_at', 'desc')
             ->limit(8)
             ->get();

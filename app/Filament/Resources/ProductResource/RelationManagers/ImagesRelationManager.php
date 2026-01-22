@@ -56,17 +56,30 @@ class ImagesRelationManager extends RelationManager
                 Tables\Columns\TextInputColumn::make('sort_order')
                     ->sortable()
                     ->rules(['numeric', 'min:0']),
-                Tables\Columns\ToggleColumn::make('is_primary')
+                Tables\Columns\IconColumn::make('is_primary')
                     ->label('Primary')
-                    ->onIcon('heroicon-s-star')
-                    ->offIcon('heroicon-o-star')
-                    ->beforeStateUpdated(function ($record, $state) {
-                        // Ensure only one primary image per product
-                        if ($state) {
+                    ->boolean()
+                    ->trueIcon('heroicon-s-star')
+                    ->falseIcon('heroicon-o-star')
+                    ->trueColor('warning')
+                    ->falseColor('gray')
+                    ->action(function ($record, \App\Filament\Resources\ProductResource\RelationManagers\ImagesRelationManager $livewire) {
+                        $newState = !$record->is_primary;
+                        
+                        if ($newState) {
+                            // Setting to Primary: Unset all others first
                             \App\Models\ProductImage::where('product_id', $record->product_id)
                                 ->where('id', '!=', $record->id)
                                 ->update(['is_primary' => false]);
+                                
+                            $record->update(['is_primary' => true]);
+                        } else {
+                            // Unsetting Primary
+                            $record->update(['is_primary' => false]);
                         }
+                        
+                        // Force refresh of the table to update other rows
+                        $livewire->dispatch('refresh-values'); 
                     }),
             ])
             ->filters([

@@ -25,7 +25,7 @@ class CategoryProducts extends Component
 
         $query = Product::where('category_id', $category->id)
             ->where('is_active', true)
-            ->with(['category', 'images']);
+            ->with(['category', 'images.media']);
 
         switch ($this->sortBy) {
             case 'price_low':

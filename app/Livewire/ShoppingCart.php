@@ -85,19 +85,22 @@ class ShoppingCart extends Component
     {
         if (auth()->check()) {
             return CartItem::where('user_id', auth()->id())
-                ->with('product.images', 'product.category')
+            ->with('product.images.media', 'product.category')
                 ->get();
         }
         
         return CartItem::where('session_id', session()->getId())
-            ->with('product.images', 'product.category')
+            ->with('product.images.media', 'product.category')
             ->get();
     }
 
     public function render()
     {
         $cartItems = $this->getCartItems();
-        $subtotal = $this->calculateSubtotal();
+        $subtotal = 0;
+        foreach ($cartItems as $item) {
+            $subtotal += $item->product->getEffectivePrice() * $item->quantity;
+        }
         
         $discount = 0;
         if ($this->appliedCoupon) {

@@ -23,7 +23,7 @@ class ProductDetail extends Component
         $this->productSlug = $productSlug;
         $this->product = Product::where('slug', $productSlug)
             ->where('is_active', true)
-            ->with(['category', 'images', 'variants', 'seo'])
+            ->with(['category', 'images.media', 'variants', 'seo'])
             ->firstOrFail();
         
         if ($this->product->primary_image) {
