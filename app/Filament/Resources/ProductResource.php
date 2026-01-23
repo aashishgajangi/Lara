@@ -92,13 +92,6 @@ class ProductResource extends Resource
                                     ->numeric()
                                     ->default(5)
                                     ->helperText('Alert when stock falls below this number'),
-                                Forms\Components\TextInput::make('weight')
-                                    ->numeric()
-                                    ->suffix('kg')
-                                    ->step(0.01),
-                                Forms\Components\TextInput::make('dimensions')
-                                    ->maxLength(255)
-                                    ->placeholder('L x W x H'),
                             ])->columns(2),
                             
                             // Images tab moved to Relation Manager
@@ -112,6 +105,81 @@ class ProductResource extends Resource
                                     ->default(false)
                                     ->helperText('Featured products appear on homepage'),
                             ])->columns(2),
+                            
+                        Forms\Components\Tabs\Tab::make('Shipping & SEO')
+                            ->schema([
+                                Forms\Components\Section::make('Physical Attributes')
+                                    ->description('Product dimensions and weight for shipping')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('weight')
+                                            ->numeric()
+                                            ->step(0.01)
+                                            ->helperText('Weight value'),
+                                        Forms\Components\Select::make('weight_unit')
+                                            ->label('Weight Unit')
+                                            ->options([
+                                                'KGM' => 'Kilograms (KGM)',
+                                                'GRM' => 'Grams (GRM)',
+                                                'LBR' => 'Pounds (LBR)',
+                                                'ONZ' => 'Ounces (ONZ)',
+                                            ])
+                                            ->default('KGM')
+                                            ->afterStateHydrated(fn ($component, $record) => $component->state($record?->seo?->schema_markup['weight_unit'] ?? 'KGM'))
+                                            ->dehydrated(false), // Handled manually in Create/Edit pages
+                                        Forms\Components\TextInput::make('dimensions')
+                                            ->maxLength(255)
+                                            ->placeholder('L x W x H')
+                                            ->columnSpanFull(),
+                                    ])->columns(2),
+
+                                Forms\Components\Section::make('Search Engine Optimization')
+                                    ->description('Customize how this product appears in search results')
+                                    ->relationship('seo')
+                                    ->schema([
+                                        Forms\Components\TextInput::make('meta_title')
+                                            ->label('Meta Title')
+                                            ->maxLength(60)
+                                            ->placeholder(fn (Forms\Get $get) => $get('../../name')) // Use parent form state if possible, otherwise plain placeholder
+                                            ->helperText('Leave empty to use product name'),
+                                        Forms\Components\Textarea::make('meta_description')
+                                            ->label('Meta Description')
+                                            ->maxLength(160)
+                                            ->rows(2)
+                                            ->helperText('Leave empty to use short description'),
+                                        Forms\Components\TextInput::make('meta_keywords')
+                                            ->label('Keywords')
+                                            ->placeholder('keyword1, keyword2'),
+                                        
+                                        Forms\Components\Section::make('Schema.org Data')
+                                            ->description('Rich snippet data for search engines')
+                                            ->schema([
+                                                Forms\Components\TextInput::make('schema_markup.brand')
+                                                    ->label('Brand Name')
+                                                    ->placeholder('e.g. Nike, Apple'),
+                                                Forms\Components\TextInput::make('schema_markup.manufacturer')
+                                                    ->label('Manufacturer'),
+                                                Forms\Components\TextInput::make('schema_markup.gtin')
+                                                    ->label('GTIN / Barcode')
+                                                    ->helperText('Global Trade Item Number (EAN, UPC, ISBN)'),
+                                                Forms\Components\TextInput::make('schema_markup.mpn')
+                                                    ->label('MPN')
+                                                    ->helperText('Manufacturer Part Number'),
+                                                Forms\Components\Select::make('schema_markup.condition')
+                                                    ->label('Item Condition')
+                                                    ->options([
+                                                        'NewCondition' => 'New',
+                                                        'UsedCondition' => 'Used',
+                                                        'RefurbishedCondition' => 'Refurbished',
+                                                        'DamagedCondition' => 'Damaged',
+                                                    ])
+                                                    ->default('NewCondition'),
+                                                Forms\Components\TextInput::make('schema_markup.color')
+                                                    ->label('Color'),
+                                                Forms\Components\TextInput::make('schema_markup.material')
+                                                    ->label('Material'),
+                                            ])->columns(2),
+                                    ]),
+                            ]),
                     ])->columnSpanFull(),
             ]);
     }

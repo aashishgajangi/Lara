@@ -16,4 +16,19 @@ class EditProduct extends EditRecord
             Actions\DeleteAction::make(),
         ];
     }
+
+    protected function afterSave(): void
+    {
+        $record = $this->getRecord();
+        $data = $this->form->getRawState();
+        
+        // Persist weight_unit to SEO metadata
+        if (isset($data['weight_unit'])) {
+            $seo = $record->seo()->firstOrCreate([]);
+            $markup = $seo->schema_markup ?? [];
+            $markup['weight_unit'] = $data['weight_unit'];
+            $seo->schema_markup = $markup;
+            $seo->save();
+        }
+    }
 }

@@ -65,6 +65,11 @@ class SeoService
             TwitterCard::setImage($imageUrl);
         }
 
+        // Retrieve custom schema markup
+        $schemaMarkup = $product->seo?->schema_markup ?? [];
+        $brandName = $schemaMarkup['brand'] ?? trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')));
+        $itemCondition = $schemaMarkup['condition'] ?? 'NewCondition';
+
         // Schema.org JSON-LD - Product
         JsonLd::setType('Product')
             ->setTitle($product->name)
@@ -73,7 +78,7 @@ class SeoService
             ->addValue('sku', $product->sku)
             ->addValue('brand', [
                 '@type' => 'Brand',
-                'name' => trim(\App\Models\SiteSetting::get('site_logo_text', config('app.name')))
+                'name' => $brandName
             ])
             ->addValue('offers', [
                 '@type' => 'Offer',
@@ -84,8 +89,68 @@ class SeoService
                 'availability' => $product->stock_quantity > 0 
                     ? 'https://schema.org/InStock' 
                     : 'https://schema.org/OutOfStock',
-                'itemCondition' => 'https://schema.org/NewCondition'
+                'itemCondition' => "https://schema.org/{$itemCondition}"
             ]);
+            
+        // Add optional schema fields if present
+        if (!empty($schemaMarkup['gtin'])) {
+            JsonLd::addValue('gtin', $schemaMarkup['gtin']);
+        }
+        if (!empty($schemaMarkup['mpn'])) {
+            JsonLd::addValue('mpn', $schemaMarkup['mpn']);
+        }
+        if (!empty($schemaMarkup['manufacturer'])) {
+            JsonLd::addValue('manufacturer', [
+                '@type' => 'Organization',
+                'name' => $schemaMarkup['manufacturer']
+            ]);
+        }
+        if (!empty($schemaMarkup['color'])) {
+            JsonLd::addValue('color', $schemaMarkup['color']);
+        }
+        if (!empty($schemaMarkup['material'])) {
+            JsonLd::addValue('material', $schemaMarkup['material']);
+        }
+        
+        // Category
+        if ($product->category) {
+            JsonLd::addValue('category', $product->category->name);
+        }
+
+        // Weight
+        if ($product->weight) {
+            $weightUnit = $schemaMarkup['weight_unit'] ?? 'KGM';
+            JsonLd::addValue('weight', [
+                '@type' => 'QuantitativeValue',
+                'value' => $product->weight,
+                'unitCode' => $weightUnit
+            ]);
+        }
+
+        // Dimensions (Format: L x W x H)
+        if ($product->dimensions) {
+            // Normalize separators (x, X, *, by) to 'x'
+            $dimString = preg_replace('/[X*]|by/', 'x', strtolower($product->dimensions));
+            $dims = array_map('trim', explode('x', $dimString));
+            
+            if (count($dims) >= 3) {
+                JsonLd::addValue('depth', [
+                    '@type' => 'QuantitativeValue',
+                    'value' => $dims[0],
+                    'unitCode' => 'CMT' // Assuming cm
+                ]);
+                JsonLd::addValue('width', [
+                    '@type' => 'QuantitativeValue',
+                    'value' => $dims[1],
+                    'unitCode' => 'CMT'
+                ]);
+                JsonLd::addValue('height', [
+                    '@type' => 'QuantitativeValue',
+                    'value' => $dims[2],
+                    'unitCode' => 'CMT'
+                ]);
+            }
+        }
 
         if ($imageUrl) {
             JsonLd::addImage($imageUrl);
