@@ -32,7 +32,7 @@ Route::get('/cart', function () {
 
 Route::get('/checkout', function () {
     return view('checkout.index');
-})->name('checkout');
+})->name('checkout')->middleware('auth');
 
 // Authentication Routes
 Route::get('/login', [App\Http\Controllers\Auth\LoginController::class, 'showLoginForm'])->name('login');
