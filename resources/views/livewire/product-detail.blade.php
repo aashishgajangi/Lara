@@ -24,10 +24,10 @@
 
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-12">
         <!-- Image Gallery -->
-        <div>
+        <div x-data="{ selectedImage: '{{ $selectedImage }}' }">
             <div class="bg-white rounded-lg shadow-sm overflow-hidden mb-4">
                 @if($selectedImage)
-                    <img src="{{ $selectedImage }}" 
+                    <img :src="selectedImage" 
                          alt="{{ $product->name }}"
                          class="w-full aspect-square object-cover">
                 @else
@@ -42,8 +42,9 @@
             @if($product->images->count() > 1)
                 <div class="grid grid-cols-4 gap-2">
                     @foreach($product->images as $image)
-                        <button wire:click="selectImage('{{ $image->large_url }}')"
-                                class="bg-white rounded-lg overflow-hidden border-2 {{ $selectedImage === $image->large_url ? 'border-blue-600' : 'border-gray-200' }} hover:border-blue-400 transition">
+                        <button @click="selectedImage = '{{ $image->large_url }}'"
+                                :class="selectedImage === '{{ $image->large_url }}' ? 'border-blue-600' : 'border-gray-200'"
+                                class="bg-white rounded-lg overflow-hidden border-2 hover:border-blue-400 transition">
                             <img src="{{ $image->thumbnail_url }}" 
                                  alt="{{ $image->alt_text }}"
                                  class="w-full aspect-square object-cover">

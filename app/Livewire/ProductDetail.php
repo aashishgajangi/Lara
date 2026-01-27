@@ -33,11 +33,7 @@ class ProductDetail extends Component
         }
     }
 
-    public function selectImage($imageUrl)
-    {
-        $this->selectedImage = $imageUrl;
-        app(\App\Services\SeoService::class)->setProductSeo($this->product);
-    }
+
 
     public function incrementQuantity()
     {
