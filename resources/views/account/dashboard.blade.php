@@ -50,17 +50,17 @@
                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
                     <div class="border rounded-lg p-4">
                         <div class="text-3xl mb-2">📦</div>
-                        <div class="text-2xl font-bold">0</div>
+                        <div class="text-2xl font-bold">{{ $totalOrders }}</div>
                         <div class="text-sm text-gray-600">Total Orders</div>
                     </div>
                     <div class="border rounded-lg p-4">
                         <div class="text-3xl mb-2">🚚</div>
-                        <div class="text-2xl font-bold">0</div>
+                        <div class="text-2xl font-bold">{{ $pendingOrders }}</div>
                         <div class="text-sm text-gray-600">Pending Orders</div>
                     </div>
                     <div class="border rounded-lg p-4">
                         <div class="text-3xl mb-2">✅</div>
-                        <div class="text-2xl font-bold">0</div>
+                        <div class="text-2xl font-bold">{{ $completedOrders }}</div>
                         <div class="text-sm text-gray-600">Completed Orders</div>
                     </div>
                 </div>

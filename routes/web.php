@@ -69,7 +69,14 @@ Route::post('/email/verification-notification', function (Illuminate\Http\Reques
 // Customer Dashboard Routes
 Route::middleware(['auth'])->group(function () {
     Route::get('/account/dashboard', function () {
-        return view('account.dashboard');
+        $user = auth()->user();
+        $customer = $user->customer;
+        
+        $totalOrders = $customer ? $customer->orders()->count() : 0;
+        $pendingOrders = $customer ? $customer->orders()->where('status', 'pending')->count() : 0;
+        $completedOrders = $customer ? $customer->orders()->where('status', 'delivered')->count() : 0;
+
+        return view('account.dashboard', compact('totalOrders', 'pendingOrders', 'completedOrders'));
     })->name('account.dashboard');
     
     Route::get('/account/addresses', function () {
