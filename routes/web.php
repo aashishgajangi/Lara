@@ -75,6 +75,21 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account/addresses', function () {
         return view('account.addresses');
     })->name('account.addresses');
+
+    Route::get('/account/orders', function () {
+        $orders = auth()->user()->customer ? auth()->user()->customer->orders()->latest()->get() : collect();
+        return view('account.orders', compact('orders'));
+    })->name('account.orders');
+
+    Route::get('/orders/success/{id}', function ($id) {
+        $order = \App\Models\Order::findOrFail($id);
+        // Ensure user owns the order via customer relationship
+        $userCustomer = auth()->user()->customer;
+        if (!$userCustomer || $order->customer_id !== $userCustomer->id) {
+            abort(403);
+        }
+        return view('orders.success', compact('order'));
+    })->name('orders.success');
 });
 
 Route::post('/admin/upload-image', [ImageUploadController::class, 'upload'])

@@ -18,7 +18,7 @@
         "laravel/socialite": "^5.24",
         "laravel/tinker": "^2.10.1",
         "predis/predis": "^3.3",
-        "razorpay/razorpay": "2.*",
+        "razorpay/razorpay": "^2.9",
         "spatie/laravel-image-optimizer": "^1.8",
         "spatie/laravel-medialibrary": "^11.17",
         "spatie/laravel-sitemap": "^7.3"

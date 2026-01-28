@@ -80,39 +80,37 @@ class OrderResource extends Resource
     {
         return $table
             ->columns([
-                Tables\Columns\TextColumn::make('customer.id')
-                    ->numeric()
+                Tables\Columns\TextColumn::make('customer.user.name') // Display customer name via relationship
+                    ->label('Customer')
+                    ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('order_number')
-                    ->searchable(),
-                Tables\Columns\TextColumn::make('status'),
-                Tables\Columns\TextColumn::make('subtotal')
-                    ->money('INR')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('tax')
-                    ->money('INR')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('shipping')
-                    ->money('INR')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('discount')
-                    ->money('INR')
-                    ->sortable(),
+                    ->searchable()
+                    ->copyable(),
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'gray',
+                        'processing' => 'warning',
+                        'shipped' => 'info',
+                        'delivered' => 'success',
+                        'cancelled' => 'danger',
+                    }),
                 Tables\Columns\TextColumn::make('total')
                     ->money('INR')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('payment_method')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('payment_status')
-                    ->searchable(),
+                    ->badge()
+                    ->color(fn (string $state): string => match ($state) {
+                        'pending' => 'gray',
+                        'paid' => 'success',
+                        'failed' => 'danger',
+                        default => 'gray',
+                    }),
                 Tables\Columns\TextColumn::make('created_at')
-                    ->dateTime()
+                    ->dateTime('M d, Y h:i A') // Explicit format
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
-                Tables\Columns\TextColumn::make('updated_at')
-                    ->dateTime()
-                    ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: false), // Make visible by default
             ])
             ->filters([
                 //
@@ -120,6 +118,7 @@ class OrderResource extends Resource
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
+            ->defaultSort('created_at', 'desc') // Show newest orders first
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),
@@ -130,7 +129,7 @@ class OrderResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\ItemsRelationManager::class,
         ];
     }
 

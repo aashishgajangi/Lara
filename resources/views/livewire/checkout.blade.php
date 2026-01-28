@@ -407,31 +407,120 @@
                 </div>
             </div>
         @elseif($currentStep == 2)
-            <!-- Review Step -->
-            <div class="text-center py-8">
-                <div class="text-4xl mb-4">💳</div>
-                <h2 class="text-2xl font-bold mb-2">Payment Gateway Integration</h2>
-                <p class="text-gray-600 mb-6">Payment gateway integration will be implemented in the next phase.</p>
-                <div class="max-w-md mx-auto bg-gray-50 p-6 rounded-lg text-left">
-                    <div class="flex justify-between mb-2">
-                        <span>Total Amount:</span>
-                        <span class="font-bold">₹{{ number_format($total, 2) }}</span>
+            <!-- Review & Payment Step -->
+            <div class="max-w-4xl mx-auto">
+                <h2 class="text-3xl font-bold mb-8 text-center">Review Your Order</h2>
+                
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <!-- Order Summary -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Order Summary</h3>
+                        <div class="space-y-3 mb-4">
+                            @foreach($cartItems as $item)
+                            <div class="flex justify-between text-sm">
+                                <span>
+                                    {{ $item->product->name }} 
+                                    @if($item->productVariant)
+                                        ({{ $item->productVariant->name }})
+                                    @endif
+                                    x {{ $item->quantity }}
+                                </span>
+                                <span>₹{{ number_format(($item->productVariant ? $item->productVariant->price : $item->product->effective_price) * $item->quantity, 2) }}</span>
+                            </div>
+                            @endforeach
+                        </div>
+                        <div class="border-t pt-3 space-y-2">
+                            <div class="flex justify-between">
+                                <span>Subtotal</span>
+                                <span>₹{{ number_format($subtotal, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span>Delivery Fee</span>
+                                <span>₹{{ number_format($deliveryFee, 2) }}</span>
+                            </div>
+                            <div class="flex justify-between font-bold text-lg border-t pt-2 mt-2">
+                                <span>Total</span>
+                                <span>₹{{ number_format($total, 2) }}</span>
+                            </div>
+                        </div>
                     </div>
-                    <div class="flex justify-between mb-2">
-                        <span>Delivery To:</span>
-                        <span class="font-medium">
-                            @php $addr = $addresses->find($selectedAddressId); @endphp
-                            {{ $addr->name }} ({{ $addr->pincode }})
-                        </span>
+
+                    <!-- Delivery Address -->
+                    <div class="bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-xl font-bold mb-4">Delivery Address</h3>
+                        @php $addr = $addresses->find($selectedAddressId); @endphp
+                        <div class="text-gray-700">
+                            <p class="font-bold">{{ $addr->name }}</p>
+                            <p class="mt-2">{{ $addr->address_line1 }}</p>
+                            @if($addr->address_line2)
+                                <p>{{ $addr->address_line2 }}</p>
+                            @endif
+                            <p>{{ $addr->city }}, {{ $addr->state }} - {{ $addr->pincode }}</p>
+                            <p class="mt-2">Phone: {{ $addr->phone }}</p>
+                        </div>
+                        <button wire:click="$set('currentStep', 1)" class="mt-4 text-blue-600 underline text-sm">Change Address</button>
                     </div>
                 </div>
-                
-                <button wire:click="$set('currentStep', 1)" class="mt-6 text-blue-600 underline">Back to Address</button>
+
+                <!-- Payment Button -->
+                <div class="mt-8 text-center">
+                    <button wire:click="initiatePayment" type="button" class="bg-green-600 text-white px-12 py-4 rounded-lg font-bold text-lg hover:bg-green-700 shadow-lg transition">
+                        Pay ₹{{ number_format($total, 2) }}
+                    </button>
+                    <div id="payment-error" class="text-red-500 mt-3"></div>
+                    <p class="text-gray-500 text-sm mt-3">🔒 Secure payment via Razorpay</p>
+                </div>
             </div>
         @endif
     </div>
 
     @push('scripts')
+    <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
     <script src="https://maps.googleapis.com/maps/api/js?key={{ env('GOOGLE_MAPS_API_KEY') }}&libraries=places"></script>
+    <script>
+        document.addEventListener('livewire:initialized', () => {
+            // Listen for payment data from backend
+            Livewire.on('open-razorpay-modal', (data) => {
+                console.log('Opening Razorpay modal with data:', data);
+                
+                const options = {
+                    "key": data[0].key,
+                    "amount": data[0].amount,
+                    "currency": "INR",
+                    "name": data[0].name,
+                    "description": data[0].description,
+                    "order_id": data[0].razorpay_order_id,
+                    "handler": function (response){
+                        console.log('Payment successful:', response);
+                        @this.handlePaymentSuccess({
+                            razorpay_payment_id: response.razorpay_payment_id,
+                            razorpay_order_id: response.razorpay_order_id,
+                            razorpay_signature: response.razorpay_signature
+                        });
+                    },
+                    "prefill": {
+                        "name": data[0].prefill.name,
+                        "email": data[0].prefill.email,
+                        "contact": data[0].prefill.contact
+                    },
+                    "theme": {
+                        "color": "#16a34a"
+                    },
+                    "modal": {
+                        "ondismiss": function(){
+                            console.log('Razorpay modal closed');
+                        }
+                    }
+                };
+                
+                const rzp1 = new Razorpay(options);
+                rzp1.on('payment.failed', function (response){
+                    console.error('Payment failed:', response);
+                    alert(response.error.description);
+                });
+                rzp1.open();
+            });
+        });
+    </script>
     @endpush
 </div>
