@@ -31,7 +31,7 @@
             <nav class="space-y-2">
                 <a href="#" class="block px-4 py-2 text-blue-600 bg-blue-50 rounded-lg font-medium">Dashboard</a>
                 <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Orders</a>
-                <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Addresses</a>
+                <a href="{{ route('account.addresses') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Addresses</a>
                 <a href="#" class="block px-4 py-2 text-gray-700 hover:bg-gray-50 rounded-lg">Account Details</a>
                 <form method="POST" action="{{ route('logout') }}">
                     @csrf

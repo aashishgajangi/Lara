@@ -71,6 +71,10 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/account/dashboard', function () {
         return view('account.dashboard');
     })->name('account.dashboard');
+    
+    Route::get('/account/addresses', function () {
+        return view('account.addresses');
+    })->name('account.addresses');
 });
 
 Route::post('/admin/upload-image', [ImageUploadController::class, 'upload'])
