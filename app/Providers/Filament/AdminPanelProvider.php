@@ -29,6 +29,7 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->brandName(fn () => \App\Models\SiteSetting::get('site_logo_text', config('app.name')))
+            ->favicon(fn () => \App\Models\SiteSetting::getMediaUrl('site_favicon'))
             ->colors(ColorService::getFilamentColors())
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')

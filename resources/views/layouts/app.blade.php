@@ -11,6 +11,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <meta name="csrf-token" content="{{ csrf_token() }}">
 
+    @if($favicon = \App\Models\SiteSetting::getMediaUrl('site_favicon'))
+        <link rel="icon" href="{{ $favicon }}">
+    @endif
+
     {!! SEO::generate() !!}
     {!! JsonLd::generate() !!}
 

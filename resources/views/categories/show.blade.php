@@ -4,7 +4,7 @@
 
 @section('content')
 <div class="bg-white border-b">
-    <div class="container mx-auto px-4 py-8">
+    <div class="{{ \App\Helpers\LayoutHelper::getContainerClasses() }} py-8">
         <nav class="text-sm text-gray-600 mb-4">
             <a href="{{ route('home') }}" class="hover:text-blue-600">Home</a>
             <span class="mx-2">/</span>
@@ -22,7 +22,7 @@
     </div>
 </div>
 
-<div class="container mx-auto px-4 py-8">
+<div class="{{ \App\Helpers\LayoutHelper::getContainerClasses() }} py-8">
     @livewire('category-products', ['categorySlug' => $slug])
 </div>
 @endsection

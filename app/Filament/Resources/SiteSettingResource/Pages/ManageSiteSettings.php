@@ -33,6 +33,7 @@ class ManageSiteSettings extends Page implements HasForms
             // General Settings
             'site_logo_text' => SiteSetting::get('site_logo_text', 'LaraCommerce'),
             'site_logo_image' => SiteSetting::get('site_logo_image'),
+            'site_favicon' => SiteSetting::get('site_favicon'),
             'container_width' => SiteSetting::get('container_width', 'default'),
             'header_sticky' => SiteSetting::get('header_sticky', true),
             
@@ -168,6 +169,12 @@ class ManageSiteSettings extends Page implements HasForms
                                             ->image()
                                             ->directory('logos')
                                             ->helperText('Upload a logo image (optional). If not provided, site name will be used.'),
+                                        Forms\Components\FileUpload::make('site_favicon')
+                                            ->label('Favicon')
+                                            ->image()
+                                            ->acceptedFileTypes(['image/x-icon', 'image/png', 'image/svg+xml'])
+                                            ->directory('favicons')
+                                            ->helperText('Upload a favicon (ico, png, svg). Used for browser tab icon.'),
                                     ])
                                     ->columns(2),
                                 
