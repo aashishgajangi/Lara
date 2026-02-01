@@ -483,13 +483,22 @@
             Livewire.on('open-razorpay-modal', (data) => {
                 console.log('Opening Razorpay modal with data:', data);
                 
+                // Handle potentially different data structures (array vs object)
+                const paymentData = Array.isArray(data) ? data[0] : data;
+
+                if (!paymentData || !paymentData.key) {
+                    console.error('Invalid payment data received:', data);
+                    alert('Unable to initialize payment. Please try again.');
+                    return;
+                }
+                
                 const options = {
-                    "key": data[0].key,
-                    "amount": data[0].amount,
+                    "key": paymentData.key,
+                    "amount": paymentData.amount,
                     "currency": "INR",
-                    "name": data[0].name,
-                    "description": data[0].description,
-                    "order_id": data[0].razorpay_order_id,
+                    "name": paymentData.name,
+                    "description": paymentData.description,
+                    "order_id": paymentData.razorpay_order_id,
                     "handler": function (response){
                         console.log('Payment successful:', response);
                         @this.handlePaymentSuccess({
@@ -499,9 +508,9 @@
                         });
                     },
                     "prefill": {
-                        "name": data[0].prefill.name,
-                        "email": data[0].prefill.email,
-                        "contact": data[0].prefill.contact
+                        "name": paymentData.prefill.name,
+                        "email": paymentData.prefill.email,
+                        "contact": paymentData.prefill.contact
                     },
                     "theme": {
                         "color": "#16a34a"
